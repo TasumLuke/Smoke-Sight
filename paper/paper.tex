@@ -1,17 +1,17 @@
 \documentclass[11pt, a4paper]{article}
 
-% ----- core packages -----
+% Core packages
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{microtype}
 
-% ----- layout -----
+% Layout
 \usepackage[margin=1in]{geometry}
 \usepackage{setspace}
 \usepackage{parskip}
 
-% ----- math, units, figures -----
+% Math, units, figures
 \usepackage{amsmath, amssymb}
 \usepackage{siunitx}
 \sisetup{per-mode=symbol}
@@ -24,7 +24,7 @@
 \usepackage{multirow}
 \usepackage{array}
 
-% ----- citations / links -----
+% Citations and links
 \usepackage[backend=biber, style=numeric-comp, sorting=none, maxbibnames=99]{biblatex}
 \addbibresource{paper.bib}
 
@@ -33,7 +33,7 @@
             linkcolor=blue,
             urlcolor=blue]{hyperref}
 
-% ----- code listings -----
+% Code listings
 \usepackage{listings}
 \usepackage{xcolor}
 \definecolor{codegrey}{rgb}{0.95,0.95,0.95}
@@ -48,7 +48,7 @@
   showstringspaces=false,
 }
 
-% ----- title block -----
+% Title block
 \title{\textbf{SmokeSight}: Radiometrically-Calibrated Plume Measurement
        from EO/IR Surveillance Video with Per-Pixel Uncertainty}
 
@@ -109,7 +109,7 @@ rather than visualisations.
 
 The literature for atmospheric remote sensing has long handled these
 questions for satellite platforms. Aerosol optical depth retrievals from
-MODIS \cite{remer2005modis}, AVIRIS, MISR \cite{kahn2009maisr}, and GOME
+MODIS \cite{remer2005modis}, AVIRIS, MISR \cite{kahn2010maisr}, and GOME
 \cite{burrows1999gome} all return calibrated quantities with quantified
 uncertainty. Atmospheric dispersion modellers including HYSPLIT
 \cite{stein2015hysplit}, FLEXPART \cite{stohl2005flexpart}, and STILT
@@ -601,7 +601,7 @@ intermediate conversion.
 SmokeSight is an open implementation of a well-understood radiometric
 inversion chain. Each step in Section~\ref{sec:pipeline} appears in
 existing textbooks \cite{schott2007remote, holst2003electro,
-liou1980radiative}, and the uncertainty propagation in
+liou2002introduction}, and the uncertainty propagation in
 Section~\ref{sec:uncertainty} is standard error-propagation theory
 \cite{rodgers2000inverse, wilks2011statistical}. The package's
 contribution is the combination: a single, peer-reviewable,
@@ -694,13 +694,14 @@ species column densities, with proper covariance propagation, is the
 obvious extension of Section~\ref{sec:retrieve}.
 
 \paragraph{Bayesian retrieval.} For ill-posed regimes near
-$\tau \to 2$ or where the wavelength coverage is sparse, the
+$\tau \to 2$, or where the wavelength coverage is sparse, the
 Rodgers Optimal Estimation framework \cite{rodgers2000inverse}
-combined with a Markov chain Monte Carlo sampler
-\cite{loyd2024monte} would give posterior-distribution outputs more
-appropriate than the present first-order propagation. Hooks for this
-are present in \texttt{\_uncertainty.monte\_carlo} but not yet
-exposed in the public API.
+combined with the general Bayesian-inverse machinery of
+Tarantola \cite{tarantola2005inverse} would give
+posterior-distribution outputs more appropriate than the present
+first-order propagation. Hooks for this are present in
+\texttt{\_uncertainty.monte\_carlo} but not yet exposed in the
+public API.
 
 \paragraph{Field-validation campaign.} We are in discussions with the
 Stevens Maritime Security Center about deploying a calibrated MWIR

@@ -12,7 +12,7 @@ known_first_party = ["smokesight"]
 
 [tool.mypy]
 strict = true
-python_version = "3.9"
+python_version = "3.10"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

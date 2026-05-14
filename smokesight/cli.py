@@ -16,6 +16,7 @@ import numpy as np
 import xarray as xr
 
 from smokesight import __version__
+from smokesight._types import FloatArray
 from smokesight.background import background
 from smokesight.calibrate import SmokeSightCalibrationError, calibrate
 from smokesight.dynamics import dynamics
@@ -65,6 +66,15 @@ def main() -> None:
     show_default=True,
     help="How many frames to use for the background estimate.",
 )
+@click.option(
+    "--fps",
+    type=float,
+    default=None,
+    help=(
+        "Override the video frame rate (Hz). TIFF stacks rarely carry "
+        "an fps in their metadata; pass this if you want dynamics to run."
+    ),
+)
 def run_cmd(
     video: str,
     config: str,
@@ -73,6 +83,7 @@ def run_cmd(
     no_dynamics: bool,
     bg_method: str,
     bg_frames: int,
+    fps: Optional[float],
 ) -> None:
     """Run the full pipeline: calibrate -> background -> retrieve -> dynamics."""
     try:
@@ -86,18 +97,18 @@ def run_cmd(
         res = retrieve(cal, bg, min_confidence=0.5)
 
         if not no_dynamics:
-            fps = cal.metadata.get("fps") or None
-            if not fps:
-                # No fps in the video metadata. Skip dynamics rather than
-                # crash -- TIFF stacks don't carry one, and users can pass
-                # --no-dynamics explicitly if they want to be loud about it.
+            effective_fps = fps or cal.metadata.get("fps") or None
+            if not effective_fps:
+                # No fps anywhere. Skip dynamics rather than crash. TIFF
+                # stacks don't carry one in their headers; users can pass
+                # --fps to opt in, or --no-dynamics to silence this warning.
                 click.echo(
-                    "warning: skipping dynamics (no fps in video metadata; "
-                    "pass --no-dynamics to silence)",
+                    "warning: skipping dynamics (no fps available; "
+                    "pass --fps to override or --no-dynamics to silence)",
                     err=True,
                 )
             else:
-                dyn = dynamics(res, fps=fps)
+                dyn = dynamics(res, fps=effective_fps)
                 # to_netcdf doesn't yet accept a NetCDF group, so dynamics
                 # goes to <output>.dynamics.nc next to the retrieval output.
                 to_netcdf(dyn, output + ".dynamics.nc")
@@ -156,7 +167,7 @@ def inspect_cmd(netcdf_path: str) -> None:
         ds.close()
 
 
-def _print_stats(name: str, arr: np.ndarray) -> None:  # type: ignore[type-arg]
+def _print_stats(name: str, arr: FloatArray) -> None:
     finite = np.isfinite(arr)
     pct_masked = 100.0 * float((~finite).sum()) / float(arr.size)
     if finite.any():
