@@ -134,3 +134,57 @@ def test_uses_chained_fixture(retrieval_result: Any, tmp_path: Path) -> None:
     out = tmp_path / "from-fixture.nc"
     to_netcdf(retrieval_result, out)
     assert out.exists()
+
+
+def test_dynamics_round_trips_through_netcdf(
+    retrieval_result: Any, tmp_path: Path
+) -> None:
+    """DynamicsResult -> NetCDF -> reopen, with all required variables present."""
+    from smokesight.dynamics import dynamics
+
+    dyn = dynamics(retrieval_result, fps=25.0, pixel_scale=0.25)
+    out = tmp_path / "dyn.nc"
+    to_netcdf(dyn, out)
+    ds = xr.open_dataset(out)
+    try:
+        for var in (
+            "rise_velocity",
+            "sigma_rise_velocity",
+            "sigma_y_coeffs",
+            "sigma_z_coeffs",
+            "sigma_y_cov",
+            "sigma_z_cov",
+            "centroid_track",
+        ):
+            assert var in ds, f"missing {var}"
+        assert (
+            ds["sigma_rise_velocity"].attrs.get("ancillary_variables")
+            == "rise_velocity"
+        )
+    finally:
+        ds.close()
+
+
+def test_dynamics_with_stability_class_writes_attr(
+    retrieval_result: Any, tmp_path: Path
+) -> None:
+    from smokesight._results import DynamicsResult
+
+    base = retrieval_result
+    dyn = DynamicsResult(
+        rise_velocity=1.0,
+        sigma_rise_velocity=0.1,
+        sigma_y_coeffs=np.array([1.0, 0.5], dtype=np.float32),
+        sigma_z_coeffs=np.array([0.7, 0.4], dtype=np.float32),
+        sigma_y_cov=np.eye(2, dtype=np.float32),
+        sigma_z_cov=np.eye(2, dtype=np.float32),
+        centroid_track=np.zeros((base.tau.shape[0], 2), dtype=np.float32),
+        stability_class="D",
+    )
+    out = tmp_path / "dyn-class.nc"
+    to_netcdf(dyn, out)
+    ds = xr.open_dataset(out)
+    try:
+        assert ds.attrs.get("pasquill_gifford_stability_class") == "D"
+    finally:
+        ds.close()

@@ -17,4 +17,16 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--tb=short -q --cov=smokesight --cov-report=term-missing"
+addopts = "--tb=short -q --cov=smokesight --cov-report=term-missing --cov-fail-under=90"
+
+[tool.coverage.report]
+# _atmos.py paths that need py6s/pymodtran are unreachable without the
+# optional [calibrate] extra; io.animate() needs FFmpeg. Both are
+# tested through structural means (factory fallback, isinstance dispatch)
+# but the per-line execution can't happen on a stock CI image.
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "raise AssertionError",
+]

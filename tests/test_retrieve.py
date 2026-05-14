@@ -122,3 +122,57 @@ def test_multi_band_produces_t_lambda(
     )
     assert res.T_lambda is not None
     assert res.T_lambda.shape[-1] == 4
+
+
+def test_column_density_single_species(
+    synthetic_video: Path, minimal_config: Dict[str, Any]
+) -> None:
+    """Passing a species cross-section computes N = tau / xsec and a matching sigma."""
+    cal, bg = _pipeline(synthetic_video, minimal_config)
+    xsec = np.array([2.0e-19])  # m^2 / mol, single wavelength
+    res = retrieve(
+        cal,
+        bg,
+        species_xsec={"NO2": xsec},
+        min_confidence=0.0,
+    )
+    assert res.N is not None and res.sigma_N is not None
+    assert res.N.shape == res.tau.shape
+    # N should equal tau / xsec wherever tau is finite
+    finite = np.isfinite(res.tau)
+    np.testing.assert_allclose(res.N[finite], res.tau[finite] / xsec[0], rtol=1e-5)
+
+
+def test_column_density_multi_species_not_implemented(
+    synthetic_video: Path, minimal_config: Dict[str, Any]
+) -> None:
+    cal, bg = _pipeline(synthetic_video, minimal_config)
+    with pytest.raises(NotImplementedError, match="multi-species"):
+        retrieve(
+            cal,
+            bg,
+            species_xsec={"NO2": np.array([1.0]), "SO2": np.array([1.0])},
+            min_confidence=0.0,
+        )
+
+
+def test_column_density_rejects_negative_xsec(
+    synthetic_video: Path, minimal_config: Dict[str, Any]
+) -> None:
+    cal, bg = _pipeline(synthetic_video, minimal_config)
+    with pytest.raises(ValueError, match="must be positive"):
+        retrieve(
+            cal,
+            bg,
+            species_xsec={"BAD": np.array([-1.0])},
+            min_confidence=0.0,
+        )
+
+
+def test_warns_when_l0_has_nonpositive_pixels(
+    synthetic_video: Path, minimal_config: Dict[str, Any]
+) -> None:
+    cal, bg = _pipeline(synthetic_video, minimal_config)
+    bg.L0[0, 0, 0] = 0.0  # zero out a single pixel
+    with pytest.warns(UserWarning, match="non-positive or non-finite L0"):
+        retrieve(cal, bg, min_confidence=0.0)

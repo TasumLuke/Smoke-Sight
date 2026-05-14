@@ -86,13 +86,22 @@ def run_cmd(
         res = retrieve(cal, bg, min_confidence=0.5)
 
         if not no_dynamics:
-            # dynamics() needs an fps; pipeline carries one in metadata.
-            dyn = dynamics(res, fps=cal.metadata.get("fps") or None)
-            # Save dynamics alongside the retrieval output -- different group
-            # would be cleaner but to_netcdf doesn't take a group arg yet, so
-            # write retrieval to <output> and dynamics to <output>.dynamics.nc.
-            to_netcdf(dyn, output + ".dynamics.nc")
-            click.echo(f"wrote {output}.dynamics.nc")
+            fps = cal.metadata.get("fps") or None
+            if not fps:
+                # No fps in the video metadata. Skip dynamics rather than
+                # crash -- TIFF stacks don't carry one, and users can pass
+                # --no-dynamics explicitly if they want to be loud about it.
+                click.echo(
+                    "warning: skipping dynamics (no fps in video metadata; "
+                    "pass --no-dynamics to silence)",
+                    err=True,
+                )
+            else:
+                dyn = dynamics(res, fps=fps)
+                # to_netcdf doesn't yet accept a NetCDF group, so dynamics
+                # goes to <output>.dynamics.nc next to the retrieval output.
+                to_netcdf(dyn, output + ".dynamics.nc")
+                click.echo(f"wrote {output}.dynamics.nc")
 
         to_netcdf(res, output)
         click.echo(f"wrote {output}")

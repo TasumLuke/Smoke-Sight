@@ -103,3 +103,35 @@ def test_metadata_recorded(
     assert cal.metadata["width"] == 64
     assert cal.metadata["video_path"].endswith("synthetic_plume.tif")
     assert "calibration_timestamp" in cal.metadata
+
+
+def test_bit_depth_from_dtype_branches() -> None:
+    """Unit-test the dtype dispatch so the rare branches stay covered."""
+    from smokesight.calibrate import _bit_depth_from_dtype
+
+    assert _bit_depth_from_dtype(np.dtype(np.uint8)) == 8
+    assert _bit_depth_from_dtype(np.dtype(np.uint16)) == 16
+    assert _bit_depth_from_dtype(np.dtype(np.uint32)) == 32
+    assert _bit_depth_from_dtype(np.dtype(np.float32)) == 32
+    # falls through to the integer width for unusual dtypes
+    assert _bit_depth_from_dtype(np.dtype(np.int64)) == 64
+
+
+def test_yaml_config_loaded_from_path(synthetic_video: Path, tmp_path: Path) -> None:
+    """calibrate() accepts a YAML file path, not just a pre-parsed dict."""
+    import yaml
+
+    cfg_path = tmp_path / "cal.yaml"
+    cfg_path.write_text(
+        yaml.safe_dump({"sensor": {"gain": 0.012, "bit_depth": 16, "ner": 0.002}})
+    )
+    cal = calibrate(synthetic_video, cfg_path, progress=False)
+    assert cal.L.shape[0] == 50
+    assert str(cfg_path) in cal.metadata["config_path"]
+
+
+def test_invalid_frame_range_rejected(
+    synthetic_video: Path, minimal_config: Dict[str, Any]
+) -> None:
+    with pytest.raises(ValueError, match="frame_range"):
+        calibrate(synthetic_video, minimal_config, frame_range=(20, 5), progress=False)

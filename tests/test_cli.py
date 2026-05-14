@@ -102,3 +102,61 @@ def test_calibrate_with_bad_config_exits_nonzero_to_stderr(
     )
     assert res.exit_code == 1
     assert "gain" in (res.stderr or "")
+
+
+def test_run_skips_dynamics_when_fps_unknown(
+    synthetic_video: Path,
+    minimal_config: Dict[str, Any],
+    tmp_path: Path,
+) -> None:
+    """TIFF stacks don't carry fps metadata. The CLI should warn and skip
+    dynamics rather than fail the whole run."""
+    cfg_path = _write_config(tmp_path, minimal_config)
+    output = tmp_path / "ret.nc"
+    runner = CliRunner(mix_stderr=False)
+    res = runner.invoke(
+        main,
+        [
+            "run",
+            str(synthetic_video),
+            str(cfg_path),
+            "-o",
+            str(output),
+            "--bg-frames",
+            "20",
+            "--bg-method",
+            "temporal_mean",
+        ],
+    )
+    assert res.exit_code == 0, res.output
+    assert output.exists()
+    assert "skipping dynamics" in (res.stderr or "")
+    # no dynamics file produced
+    assert not (tmp_path / "ret.nc.dynamics.nc").exists()
+
+
+def test_inspect_prints_tau_stats_when_present(
+    synthetic_video: Path,
+    minimal_config: Dict[str, Any],
+    tmp_path: Path,
+) -> None:
+    """The inspect subcommand should report tau min/max/mean for a retrieval file."""
+    cfg_path = _write_config(tmp_path, minimal_config)
+    output = tmp_path / "ret.nc"
+    runner = CliRunner()
+    runner.invoke(
+        main,
+        [
+            "run",
+            str(synthetic_video),
+            str(cfg_path),
+            "-o",
+            str(output),
+            "--bg-frames",
+            "20",
+            "--no-dynamics",
+        ],
+    )
+    res = runner.invoke(main, ["inspect", str(output)])
+    assert res.exit_code == 0, res.output
+    assert "tau stats" in res.output or "all masked" in res.output
