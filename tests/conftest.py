@@ -21,6 +21,7 @@ PLUME_SIGMA_PX = 5.0
 PLUME_CENTER = (32, 32)  # (cx, cy) in a 64x64 frame
 BACKGROUND_DN = 5000
 N_FRAMES = 50
+N_BG_FRAMES = 20  # frames 0..19 are plume-free; 20..49 contain the plume
 FRAME_HW: Tuple[int, int] = (64, 64)
 BIT_DEPTH = 16
 
@@ -38,10 +39,15 @@ def synthetic_video(tmp_path: Path) -> Path:
 
     rng = np.random.default_rng(0)
     max_dn = 2**BIT_DEPTH - 1
-    L_clean = (BACKGROUND_DN * transmittance).astype(np.float64)
+    L_with_plume = (BACKGROUND_DN * transmittance).astype(np.float64)
+    L_no_plume = np.full_like(L_with_plume, float(BACKGROUND_DN))
 
     frames = []
-    for _ in range(N_FRAMES):
+    for i in range(N_FRAMES):
+        # Plume-free frames first (so the background estimator sees the
+        # true L0), then plume-present frames where the retrieval is
+        # supposed to recover tau.
+        L_clean = L_no_plume if i < N_BG_FRAMES else L_with_plume
         # Poisson shot noise via a normal approximation (large counts -> safe);
         # plus a flat 5-DN read-noise term.
         shot = rng.normal(0.0, np.sqrt(L_clean), size=L_clean.shape)
