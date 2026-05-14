@@ -210,8 +210,6 @@ If you use SmokeSight in published work, please cite via the
 }
 ```
 
-A JOSS paper is forthcoming.
-
 ---
 
 ## License
