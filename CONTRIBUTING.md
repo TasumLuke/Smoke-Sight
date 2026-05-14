@@ -12,9 +12,10 @@ anything more than:
 - a bug fix with an obvious test, or
 - adding test coverage for an existing code path.
 
-Larger changes — new dispersion models, alternative retrieval algorithms,
-breaking API changes — are best discussed before you write code, so we
-can confirm scope before there's anything to review.
+Anything bigger gets a quick chat first. New dispersion models,
+alternative retrieval algorithms, breaking API changes, that kind of
+thing. Saves both of us time when scope turns out to be different than
+either side assumed.
 
 ## The one rule that's non-negotiable
 
@@ -23,7 +24,7 @@ can confirm scope before there's anything to review.
 If a function in `smokesight/` returns a number that came from a sensor
 reading, that number ships with a matching `sigma_*` field. If the
 uncertainty can't be propagated for some reason, the quantity is not
-returned at all — we don't ship measurements without error bars.
+returned at all. We don't ship measurements without error bars.
 
 This is enforced by convention, not by the type system, so reviewers
 look for it explicitly. The architecture in `smokesight/_uncertainty.py`
@@ -87,7 +88,7 @@ Open an issue with:
 - the SmokeSight version (`python -c "import smokesight; print(smokesight.__version__)"`),
 - Python version and OS,
 - a minimal reproducing snippet (a synthetic video and config dict is
-  fine — anything that runs against the test fixtures works), and
+  fine, anything that runs against the test fixtures works), and
 - what you expected vs. what happened.
 
 ## Security

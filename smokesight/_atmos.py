@@ -1,10 +1,10 @@
 """Atmospheric path correction.
 
-IdentityAtmos (no-op, used when nothing is configured or
-when the optional radiative-transfer extras aren't installed) and
-AtmosModel (proper correction via py6s or pymodtran). Use make_atmos()
-to pick the right one from a parsed cal.yaml — it handles the import
-fallback so the rest of the pipeline doesn't have to care.
+IdentityAtmos (no-op, used when nothing is configured or when the
+optional radiative-transfer extras aren't installed) and AtmosModel
+(proper correction via py6s or pymodtran). Use make_atmos() to pick
+the right one from a parsed cal.yaml. It handles the import fallback
+so the rest of the pipeline doesn't have to care.
 """
 
 from __future__ import annotations

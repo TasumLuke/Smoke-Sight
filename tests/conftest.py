@@ -1,6 +1,6 @@
 """Shared fixtures.
 
-The synthetic video is the workhorse — every pipeline-level test feeds
+The synthetic video is the workhorse. Every pipeline-level test feeds
 it through one or more of the public functions and checks that the
 recovered numbers match what we put in.
 """

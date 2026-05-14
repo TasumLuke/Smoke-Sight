@@ -3,7 +3,7 @@
 The MC helper is seeded with default_rng(42) so two runs on the same
 inputs produce identical output; callers don't get to override the seed.
 The "sigma" reported by monte_carlo is the (p84-p16)/2 half-range, not
-std() of the samples — that's the convention SmokeSight uses everywhere
+std() of the samples. That's the convention SmokeSight uses everywhere
 it ships an MC-derived uncertainty.
 """
 
@@ -59,9 +59,10 @@ def tau_uncertainty(
 ) -> FloatArray:
     """sigma_tau = sqrt((sigma_L/L)^2 + (sigma_L0/L0)^2), NaN where invalid.
 
-    First-order propagation through tau = -ln(L / L0). Invalid =
-    L<=0, L0<=0, or non-finite — in those cases sigma_tau is NaN, which
-    matches the contract that masked tau pixels carry no numeric sigma.
+    First-order propagation through tau = -ln(L / L0). Invalid means
+    L<=0, L0<=0, or non-finite. Those cases produce NaN in sigma_tau,
+    which matches the contract that masked tau pixels carry no numeric
+    sigma.
     """
     L = np.asarray(L, dtype=np.float64)
     sigma_L = np.asarray(sigma_L, dtype=np.float64)
@@ -130,7 +131,7 @@ def monte_carlo(
     """Run ``func`` on n Gaussian-perturbed copies of inputs.
 
     Returns (mean, sigma) where sigma is (p84 - p16) / 2 across samples.
-    The RNG is seeded internally — pass everything you need through
+    The RNG is seeded internally. Pass everything you need through
     ``inputs`` and ``sigmas``, not via globals.
     """
     if n < _MC_MIN_SAMPLES:

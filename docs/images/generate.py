@@ -161,7 +161,7 @@ def fig_tau_recovery(res, tau_truth: np.ndarray) -> None:
         ax.scatter([CENTER[0]], [CENTER[1]], marker="x", color="black", s=60)
 
     fig.suptitle(
-        "Plume centre recovery — ±10% tolerance is the spec gate", y=1.02
+        "Plume centre recovery (±10% tolerance is the spec gate)", y=1.02
     )
     fig.tight_layout()
     fig.savefig(OUT_DIR / "tau_recovery.png", dpi=110, bbox_inches="tight")

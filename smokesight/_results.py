@@ -2,8 +2,8 @@
 
 One private module so that everyone can import these without dragging
 in `smokesight.io`. The `to_netcdf` convenience methods lazy-import io
-on call — they'll be wired up properly once io.to_netcdf is implemented
-in Phase 4.
+on call. They were wired up properly once io.to_netcdf landed in
+Phase 4; the lazy import remains so this file stays cheap to import.
 """
 
 from __future__ import annotations
