@@ -1,1 +1,29 @@
+# Single Gaussian plume rising at constant velocity against a stable
+# background. This is the workhorse scenario the integration tests fit
+# against -- if a change breaks recovery on this file, something's wrong.
 
+name: synthetic_gaussian
+description: Single Gaussian plume, constant rise, stable background
+
+video:
+  frames: 100
+  width: 128
+  height: 128
+  fps: 25.0
+
+plume:
+  peak_tau: 0.5
+  sigma_pixels: 8
+  rise_velocity_pixels_per_frame: 0.5
+  source_x: 64
+  source_y: 100
+
+noise:
+  shot_noise_scale: 0.01
+  read_noise_ner: 0.002
+
+# Tolerances the retrieval is expected to meet on this scenario.
+# Tests check recovered values fall inside these bounds.
+expected_outputs:
+  peak_tau_tolerance: 0.10        # +/- 10% of peak_tau (0.5)
+  rise_velocity_tolerance: 0.15   # +/- 15% of injected rise velocity

@@ -1,1 +1,13 @@
+# Flat-screen smoke: a rectangular slab of uniform optical depth. The
+# Gaussian-fit dispersion estimator should report a sigma close to the
+# rectangle's effective width (~ width_pixels / 2.355 for FWHM->sigma);
+# this scenario exists mainly to stress-test the fitter on a non-Gaussian
+# distribution and confirm the masking gates handle the sharp edges.
 
+name: synthetic_screen
+description: Flat-screen smoke (uniform tau across plume width)
+
+plume:
+  peak_tau: 0.3
+  width_pixels: 20
+  height_pixels: 60
