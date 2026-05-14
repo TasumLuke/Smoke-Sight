@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -121,9 +123,10 @@ def test_dynamics_result_formats_nan_rise() -> None:
     assert "stability=n/a" in repr(r)
 
 
-def test_to_netcdf_raises_until_io_module_lands() -> None:
-    """Sanity check for the Phase-4 wiring: result objects know that
-    smokesight.io.to_netcdf doesn't exist yet and say so cleanly."""
+def test_to_netcdf_method_delegates_to_io(tmp_path: Path) -> None:
+    """The lazy import in _Result.to_netcdf now resolves io.to_netcdf
+    (which exists from Phase 4.5 onward) and writes a real file."""
     r = _calibration_result()
-    with pytest.raises(NotImplementedError, match="Phase 4"):
-        r.to_netcdf("/tmp/should-not-be-written.nc")
+    out = tmp_path / "cal.nc"
+    r.to_netcdf(out)
+    assert out.exists()
