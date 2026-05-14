@@ -1,1 +1,5 @@
+SmokeSight
+==========
+
+MVP documentation.
 

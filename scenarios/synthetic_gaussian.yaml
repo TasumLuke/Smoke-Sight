@@ -1,1 +1,9 @@
-
+name: synthetic_gaussian
+video:
+  frames: 100
+  width: 128
+  height: 128
+  fps: 25.0
+plume:
+  peak_tau: 0.5
+  sigma_pixels: 8

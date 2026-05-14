@@ -1,1 +1,6 @@
-
+name: cal_panel_reference
+panel:
+  reflectance: 0.99
+  temperature_K: 293.15
+  emissivity: 0.95
+expected_radiance: 12.4

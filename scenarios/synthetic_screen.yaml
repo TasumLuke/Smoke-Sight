@@ -1,1 +1,5 @@
-
+name: synthetic_screen
+plume:
+  peak_tau: 0.3
+  width_pixels: 20
+  height_pixels: 60
