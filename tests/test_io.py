@@ -110,3 +110,27 @@ def test_result_to_netcdf_method_now_works(
     out = tmp_path / "cal.nc"
     cal.to_netcdf(out)  # would have raised in Phase 3
     assert out.exists()
+
+
+def test_output_opens_with_xarray_without_warnings(
+    synthetic_video: Path, minimal_config: Dict[str, Any], tmp_path: Path
+) -> None:
+    """xarray.open_dataset on a SmokeSight-produced file should succeed
+    without emitting CF-compatibility warnings."""
+    import warnings as _warnings
+
+    _, _, res = _pipeline(synthetic_video, minimal_config)
+    out = tmp_path / "ret.nc"
+    to_netcdf(res, out)
+
+    with _warnings.catch_warnings():
+        _warnings.simplefilter("error")
+        ds = xr.open_dataset(out)
+        ds.close()
+
+
+def test_uses_chained_fixture(retrieval_result: Any, tmp_path: Path) -> None:
+    """The chained retrieval_result fixture should produce a writable result."""
+    out = tmp_path / "from-fixture.nc"
+    to_netcdf(retrieval_result, out)
+    assert out.exists()

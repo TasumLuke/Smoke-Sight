@@ -87,3 +87,46 @@ def full_config(tmp_path: Path) -> Dict[str, Any]:
             "dark_current": str(dark_path),
         }
     }
+
+
+@pytest.fixture
+def multi_band_config() -> Dict[str, Any]:
+    """Config with a 4-band spectral response so calibrate produces N_lambda=4."""
+    return {
+        "sensor": {
+            "gain": 0.012,
+            "bit_depth": BIT_DEPTH,
+            "ner": 0.002,
+            "spectral_response": {
+                "wavelengths": [3.5, 4.0, 4.5, 5.0],
+                "response": [0.3, 0.8, 0.9, 0.4],
+            },
+        }
+    }
+
+
+# ---------------------------------------------------------------------------
+# Chained fixtures: cal_result -> bg_result -> retrieval_result. These let
+# downstream tests skip re-running the whole pipeline themselves.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def cal_result(synthetic_video: Path, minimal_config: Dict[str, Any]) -> Any:
+    from smokesight.calibrate import calibrate
+
+    return calibrate(synthetic_video, minimal_config, progress=False)
+
+
+@pytest.fixture
+def bg_result(cal_result: Any) -> Any:
+    from smokesight.background import background
+
+    return background(cal_result, n_frames=N_BG_FRAMES, method="temporal_median")
+
+
+@pytest.fixture
+def retrieval_result(cal_result: Any, bg_result: Any) -> Any:
+    from smokesight.retrieve import retrieve
+
+    return retrieve(cal_result, bg_result, min_confidence=0.0)

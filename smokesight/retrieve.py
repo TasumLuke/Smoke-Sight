@@ -100,10 +100,15 @@ def retrieve(
 
     T_lambda: Optional[FloatArray] = None
     if wavelengths is not None and L.shape[-1] > 1:
-        T_lambda = np.exp(
-            -np.where(np.isnan(tau)[..., np.newaxis], 0.0, tau[..., np.newaxis])
-        ).astype(np.float32)
-        T_lambda = np.where(np.isnan(tau)[..., np.newaxis], np.nan, T_lambda)
+        n_lambda = L.shape[-1]
+        # Broadcast the panchromatic tau across N_lambda bands. For a true
+        # per-band retrieval we'd invert L_lambda/L0_lambda per band; that's
+        # a later enhancement. For now this gives downstream consumers a
+        # (T, H, W, N_lambda) cube with the right shape and NaN propagation.
+        tau_bands = np.repeat(tau[..., np.newaxis], n_lambda, axis=-1)
+        with np.errstate(invalid="ignore"):
+            T_lambda = np.exp(-np.nan_to_num(tau_bands)).astype(np.float32)
+        T_lambda = np.where(np.isnan(tau_bands), np.nan, T_lambda)
 
     N: Optional[FloatArray] = None
     sigma_N: Optional[FloatArray] = None

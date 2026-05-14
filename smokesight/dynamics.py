@@ -195,8 +195,8 @@ def _fit_dispersion_axis(
             continue
 
         # Use the frame's centroid distance from source as "downwind distance".
-        # If we can't compute it, skip the frame.
-        cx_frame, cy_frame = ndimage.center_of_mass(valid_frame)
+        # ndimage.center_of_mass returns (row, col) -- (y, x) in image-space.
+        cy_frame, cx_frame = ndimage.center_of_mass(valid_frame)
         if np.isnan(cx_frame) or np.isnan(cy_frame):
             continue
         dx = cx_frame - sx

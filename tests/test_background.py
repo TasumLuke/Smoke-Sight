@@ -82,3 +82,51 @@ def test_valid_methods_constant_lists_all_branches() -> None:
         "gmm",
         "percentile_10",
     }
+
+
+def test_gmm_method_runs_when_sklearn_available(
+    synthetic_video: Path, minimal_config: Dict[str, Any]
+) -> None:
+    """GMM method exists as a code path but is slow; run it on a small
+    crop so the test stays fast. Skips cleanly if sklearn isn't installed."""
+    pytest.importorskip("sklearn")
+    cal = _cal(synthetic_video, minimal_config)
+    # crop down to keep the per-pixel GMM affordable in the test suite
+    cal.L = cal.L[:20, :8, :8, :]
+    bg = background(cal, n_frames=20, method="gmm")
+    assert bg.method == "gmm"
+    assert bg.L0.shape == (8, 8, 1)
+    assert np.all((bg.confidence >= 0.0) & (bg.confidence <= 1.0))
+
+
+def test_gmm_method_errors_without_sklearn(monkeypatch: pytest.MonkeyPatch) -> None:
+    """If sklearn isn't importable, the gmm method raises a friendly
+    ImportError pointing at the install command rather than the bare
+    ModuleNotFoundError."""
+    import builtins
+
+    real_import = builtins.__import__
+
+    def fake_import(name: str, *args: Any, **kwargs: Any) -> Any:
+        if name.startswith("sklearn"):
+            raise ImportError("no sklearn")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    from smokesight._atmos import IdentityAtmos
+    from smokesight._results import CalibrationResult
+    from smokesight._sensor import SensorModel
+
+    L = np.ones((5, 8, 8, 1), dtype=np.float32)
+    cal = CalibrationResult(
+        L=L,
+        sigma_L=np.full_like(L, 0.01),
+        metadata={},
+        sensor=SensorModel.from_config(
+            {"sensor": {"gain": 0.012, "bit_depth": 14, "ner": 0.002}}
+        ),
+        atmos=IdentityAtmos(),
+    )
+    with pytest.raises(ImportError, match="scikit-learn"):
+        background(cal, n_frames=5, method="gmm")

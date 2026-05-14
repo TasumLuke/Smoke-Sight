@@ -119,3 +119,48 @@ def test_runs_end_to_end_on_synthetic_pipeline(
     # metadata may be missing fps for the synthetic TIFF; pass it explicitly
     dyn = dynamics(res, fps=25.0, pixel_scale=0.25)
     assert dyn.centroid_track.shape[0] == res.tau.shape[0]
+
+
+def test_pg_fit_recovers_known_sigma() -> None:
+    """For a synthetic plume whose sigma follows a known power law,
+    the fitted Pasquill-Gifford `a` should land within 20% of ground truth.
+
+    Construct frames where the centroid moves 1 px/frame downwind from the
+    source and the cross-wind sigma follows sigma_y(x) = A_TRUE * x^B_TRUE
+    in metres. With pixel_scale = 0.25 m/px, downwind distance at frame t
+    is 0.25 * t metres, and sigma in pixels at that frame is
+    (A_TRUE * (0.25 * t) ** B_TRUE) / 0.25.
+    """
+    a_true = 1.0  # sigma at 1 m downwind
+    b_true = 0.7  # PG stability-class-D style exponent
+    pixel_scale = 0.25
+
+    t = 30
+    h, w = 96, 96
+    yy, xx = np.mgrid[0:h, 0:w]
+    src_x = w // 2
+    src_y = h - 1  # source at the bottom edge
+    tau = np.zeros((t, h, w), dtype=np.float32)
+    for i in range(1, t + 1):  # skip i=0 so dist > 0
+        cy = src_y - i  # 1 px/frame upward
+        dist_m = pixel_scale * i
+        sigma_m = a_true * (dist_m**b_true)
+        sigma_px = max(sigma_m / pixel_scale, 1.0)
+        tau[i - 1] = 0.5 * np.exp(
+            -((xx - src_x) ** 2 + (yy - cy) ** 2) / (2 * sigma_px**2)
+        ).astype(np.float32)
+
+    res = RetrievalResult(
+        tau=tau,
+        sigma_tau=np.full_like(tau, 0.01),
+        mask=np.ones_like(tau),
+        metadata={"fps": 10.0, "pixel_scale": pixel_scale},
+    )
+    dyn = dynamics(res, source_location=(int(src_x), int(src_y)))
+    a_fit = float(dyn.sigma_y_coeffs[0])
+    assert np.isfinite(a_fit), f"fit failed: a={a_fit}"
+    # The Gaussian-width estimator on a discretised image isn't perfect;
+    # 20% tolerance (spec sec 8.5) gives the fit room to breathe.
+    assert (
+        abs(a_fit - a_true) / a_true < 0.20
+    ), f"fitted a={a_fit:.3f} not within 20% of ground truth {a_true}"

@@ -100,3 +100,25 @@ def test_metadata_inherits_and_extends(
     # retrieval params added
     assert res.metadata["tau_max"] == 1.5
     assert res.metadata["background_method"] == "temporal_median"
+
+
+def test_multi_band_produces_t_lambda(
+    synthetic_video: Path, multi_band_config: Dict[str, Any]
+) -> None:
+    """Pass a 4-band calibration through retrieve(); T_lambda must come
+    out with N_lambda=4 on its last axis (spec sec 8.4 multi-band test)."""
+    from smokesight.background import background as _background
+    from smokesight.calibrate import calibrate as _calibrate
+
+    cal = _calibrate(synthetic_video, multi_band_config, progress=False)
+    assert cal.L.shape[-1] == 4  # sanity: calibrate produced 4 bands
+
+    bg = _background(cal, n_frames=20)
+    res = retrieve(
+        cal,
+        bg,
+        wavelengths=[3.5, 4.0, 4.5, 5.0],
+        min_confidence=0.0,
+    )
+    assert res.T_lambda is not None
+    assert res.T_lambda.shape[-1] == 4
