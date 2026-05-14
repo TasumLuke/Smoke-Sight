@@ -54,14 +54,15 @@ def background(
     if mask is not None:
         if mask.shape != confidence.shape:
             raise ValueError(
-                f"mask shape {mask.shape} does not match confidence shape {confidence.shape}"
+                f"mask shape {mask.shape} does not match "
+                f"confidence shape {confidence.shape}"
             )
         confidence = np.where(mask.astype(bool), 0.0, confidence)
 
     # downstream consumers can filter on the (returned) min_confidence; we
     # don't pre-mask L0 because the user may want the underlying values.
     confidence = np.clip(confidence, 0.0, 1.0).astype(np.float32)
-    _ = min_confidence  # carried into BackgroundResult metadata? not yet -- doc'd as gate
+    _ = min_confidence  # doc'd as a downstream gate, not stored on the result
 
     return BackgroundResult(
         L0=L0.astype(np.float32),

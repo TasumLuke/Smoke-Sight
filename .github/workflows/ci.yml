@@ -56,3 +56,39 @@ jobs:
         with:
           files: ./coverage.xml
           fail_ci_if_error: false
+
+  paper:
+    name: Build paper PDF
+    runs-on: ubuntu-latest
+    # Don't gate the test matrix on the paper job; if LaTeX is broken we
+    # still want to know whether the code is healthy.
+    needs: []
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install TeX Live (pdflatex + bibtex + standard packages)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-latex-base \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-science \
+            texlive-bibtex-extra \
+            biber \
+            latexmk
+
+      - name: Compile paper.tex
+        working-directory: paper
+        run: |
+          latexmk -pdf -interaction=nonstopmode -halt-on-error paper.tex
+          ls -lh paper.pdf
+
+      - name: Upload paper PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: smokesight-paper
+          path: paper/paper.pdf
+          if-no-files-found: error

@@ -216,14 +216,18 @@ def _dynamics_to_dataset(r: DynamicsResult) -> xr.Dataset:
             ("coeff",),
             r.sigma_y_coeffs,
             {
-                "long_name": "Pasquill-Gifford power-law coefficients (a, b) for sigma_y",
+                "long_name": (
+                    "Pasquill-Gifford power-law coefficients (a, b) for sigma_y"
+                ),
             },
         ),
         "sigma_z_coeffs": (
             ("coeff",),
             r.sigma_z_coeffs,
             {
-                "long_name": "Pasquill-Gifford power-law coefficients (c, d) for sigma_z",
+                "long_name": (
+                    "Pasquill-Gifford power-law coefficients (c, d) for sigma_z"
+                ),
             },
         ),
         "sigma_y_cov": (

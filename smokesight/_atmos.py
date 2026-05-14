@@ -104,10 +104,10 @@ def _probe_backend(requested: str) -> str:
     # Auto-pick: prefer py6s, fall back to pymodtran, otherwise let
     # ImportError propagate so make_atmos can warn and fall back.
     try:
-        import py6s  # noqa: F401
+        import py6s  # noqa: F401, F811
 
         return "py6s"
     except ImportError:
-        import pymodtran  # noqa: F401
+        import pymodtran  # noqa: F401, F811
 
         return "pymodtran"

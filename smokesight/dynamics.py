@@ -185,10 +185,8 @@ def _fit_dispersion_axis(
         valid_frame = np.where(np.isfinite(frame), frame, 0.0)
         if axis == "x":
             profile = valid_frame.sum(axis=0)  # integrate over y
-            anchor = sx
         else:
             profile = valid_frame.sum(axis=1)
-            anchor = sy
 
         sigma = _gaussian_width_or_nan(profile)
         if not np.isfinite(sigma):
